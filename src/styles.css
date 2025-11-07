@@ -1,0 +1,14 @@
+:root{
+  --sidebar-width: 460px;
+  --map-height: calc(100vh - 60px);
+  font-family: Inter, system-ui, Arial, sans-serif;
+}
+body, html, #root { height: 100%; margin: 0; }
+.app-header{ height:60px; display:flex; align-items:center; padding:0 20px; background:#0f172a; color:#fff; font-weight:600}
+.app-body{ display:flex; height:calc(100vh - 60px); }
+.sidebar{ width:var(--sidebar-width); padding:16px; box-sizing:border-box; overflow:auto; background:#f8fafc }
+.map-area{ flex:1; height:100%; }
+.search-results{ list-style:none; padding:0; margin:8px 0 }
+.search-results li{ padding:8px; border-bottom:1px solid #e6eef6; cursor:pointer }
+.uploader{ margin-top:12px }
+.chart-container{ margin-top:12px }
