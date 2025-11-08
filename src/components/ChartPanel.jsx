@@ -1,10 +1,10 @@
 import React, { useMemo } from "react";
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, TimeScale } from "chart.js";
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, LineController, ScatterController, Title, Tooltip, Legend, TimeScale } from "chart.js";
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { Line } from "react-chartjs-2";
 import 'chartjs-adapter-date-fns';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, TimeScale, ChartDataLabels);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, LineController, ScatterController, Title, Tooltip, Legend, TimeScale, ChartDataLabels);
 
 function cToF(c) {
   return c == null ? null : (c * 9 / 5) + 32;
