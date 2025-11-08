@@ -1,0 +1,48 @@
+{
+  "url": "https://poachers-paradise.github.io/weather-chart-mapper/",
+  "title": "Weather Chart Mapper - MVP",
+  "rootHtml": "<div class=\"app-root\"><header class=\"app-header\">Weather Chart Mapper — MVP</header><div class=\"app-body\"><aside class=\"sidebar\"><div class=\"searchbox\"><form><input placeholder=\"Search place or address\" value=\"\"><button type=\"submit\">Search</button></form><ul class=\"search-results\"></ul></div><div class=\"uploader\"><label>Upload GeoJSON<input type=\"file\" accept=\"application/geo+json,application/json\"></label></div><div class=\"chart-container\"><h3>Forecast</h3><div>No data available</div></div></aside><main class=\"map-area\"><div class=\"maplibregl-map\" style=\"height: 100%; width: 100%;\"><div class=\"maplibregl-canvas-container maplibregl-interactive maplibregl-touch-drag-pan maplibregl-touch-zoom-rotate\"><canvas class=\"maplibregl-canvas\" tabindex=\"0\" aria-label=\"Map\" role=\"region\" width=\"340\" height=\"540\" style=\"width: 340px; height: 540px;\"></canvas><div aria-label=\"Map marker\" class=\"maplibregl-marker maplibregl-marker-anchor-center\" style=\"transform: translate(-50%, -50%) translate(170px, 256px) rotateX(0deg) rotateZ(0deg);\"><svg display=\"block\" height=\"41px\" width=\"27px\" viewBox=\"0 0 27 41\"><g fill-rule=\"nonzero\"><g transform=\"translate(3.0, 29.0)\" fill=\"#000000\"><ellipse opacity=\"0.04\" cx=\"10.5\" cy=\"5.80029008\" rx=\"10.5\" ry=\"5.25002273\"></ellipse><ellipse opacity=\"0.04\" cx=\"10.5\" cy=\"5.80029008\" rx=\"10.5\" ry=\"5.25002273\"></ellipse><ellipse opacity=\"0.04\" cx=\"10.5\" cy=\"5.80029008\" rx=\"9.5\" ry=\"4.77275007\"></ellipse><ellipse opacity=\"0.04\" cx=\"10.5\" cy=\"5.80029008\" rx=\"8.5\" ry=\"4.29549936\"></ellipse><ellipse opacity=\"0.04\" cx=\"10.5\" cy=\"5.80029008\" rx=\"7.5\" ry=\"3.81822308\"></ellipse><ellipse opacity=\"0.04\" cx=\"10.5\" cy=\"5.80029008\" rx=\"6.5\" ry=\"3.34094679\"></ellipse><ellipse opacity=\"0.04\" cx=\"10.5\" cy=\"5.80029008\" rx=\"5.5\" ry=\"2.86367051\"></ellipse><ellipse opacity=\"0.04\" cx=\"10.5\" cy=\"5.80029008\" rx=\"4.5\" ry=\"2.38636864\"></ellipse></g><g fill=\"#3FB1CE\"><path d=\"M27,13.5 C27,19.074644 20.250001,27.000002 14.75,34.500002 C14.016665,35.500004 12.983335,35.500004 12.25",
+  "logs": [
+    {
+      "type": "warn",
+      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A050180004100000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
+    },
+    {
+      "type": "warn",
+      "text": "[.WebGL-0x178c0013ce00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "type": "warn",
+      "text": "[.WebGL-0x178c0013ce00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "type": "warn",
+      "text": "[.WebGL-0x178c0013ce00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "type": "warn",
+      "text": "[.WebGL-0x178c0013ce00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+    },
+    {
+      "type": "goto-error",
+      "text": "Navigation timeout of 30000 ms exceeded"
+    },
+    {
+      "type": "error",
+      "text": "JSHandle@object"
+    },
+    {
+      "type": "requestfailed",
+      "url": "https://api.open-meteo.com/v1/forecast?latitude=51.5074&longitude=-0.1278&start_date=2025-11-08&end_date=2025-11-17&hourly=temperature_2m,surface_pressure&timezone=UTC"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_TIMED_OUT"
+    }
+  ],
+  "screenshotPath": "screenshots/chart_live_check.png"
+}

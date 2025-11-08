@@ -32,7 +32,7 @@ function partitionByDay(times) {
   return groups;
 }
 
-export default function ChartPanel({ openMeteoData, nwsObservations, loading }) {
+export default function ChartPanel({ openMeteoData, nwsObservations, loading, fetchError, onRetry }) {
   const grouped = useMemo(() => {
     if (!openMeteoData || !openMeteoData.hourly) return null;
     const time = openMeteoData.hourly.time || [];
@@ -174,7 +174,13 @@ export default function ChartPanel({ openMeteoData, nwsObservations, loading }) 
     <div className="chart-container">
       <h3>Forecast</h3>
       {loading && <div>Loading data…</div>}
-      {!grouped && !loading && <div>No data available</div>}
+      {fetchError && !loading && (
+        <div style={{ color: '#b91c1c' }}>
+          <div>Failed to load forecast: {String(fetchError)}</div>
+          <button onClick={onRetry} style={{ marginTop: 8 }}>Retry</button>
+        </div>
+      )}
+      {!grouped && !loading && !fetchError && <div>No data available</div>}
 
       {groupAData && (
         <div>
