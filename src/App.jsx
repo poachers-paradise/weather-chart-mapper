@@ -14,9 +14,10 @@ export default function App() {
     async function load() {
       setLoading(true);
       try {
-        const end = new Date();
+        // Request the full 10-day forecast starting from today (current day forward)
         const start = new Date();
-        start.setDate(end.getDate() - 3);
+        const end = new Date();
+        end.setDate(start.getDate() + 9); // 10 days inclusive: day 0..9
         const fmt = (d) => d.toISOString().slice(0, 10);
         const data = await fetchOpenMeteoArchive(location.lat, location.lon, fmt(start), fmt(end));
         setOpenMeteoData(data);
