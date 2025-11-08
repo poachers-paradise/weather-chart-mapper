@@ -11,3 +11,5 @@ yarn-error.log*
 .parcel-cache/
 .idea/
 /.history/
+screenshots/
+scripts/check_page_result.json
