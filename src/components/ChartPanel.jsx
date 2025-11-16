@@ -65,7 +65,20 @@ export default function ChartPanel({ openMeteoData, nwsObservations, loading, fe
     const groupA = days.slice(0, 5).flat();
     const groupB = days.slice(5, 10).flat();
 
-    return { groupA, groupB };
+    // Calculate date ranges for titles
+    const groupAStart = groupA.length > 0 ? groupA[0].t : null;
+    const groupAEnd = groupA.length > 0 ? groupA[groupA.length - 1].t : null;
+    const groupBStart = groupB.length > 0 ? groupB[0].t : null;
+    const groupBEnd = groupB.length > 0 ? groupB[groupB.length - 1].t : null;
+
+    const formatDate = (date) => date ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+
+    return { 
+      groupA, 
+      groupB,
+      groupATitle: `${formatDate(groupAStart)} - ${formatDate(groupAEnd)}`,
+      groupBTitle: `${formatDate(groupBStart)} - ${formatDate(groupBEnd)}`
+    };
   }, [openMeteoData]);
 
   // Custom external tooltip handler
@@ -216,9 +229,9 @@ export default function ChartPanel({ openMeteoData, nwsObservations, loading, fe
       )}
       {!grouped && !loading && !fetchError && <div>No data available</div>}
 
-      {groupAData && (
+      {groupAData && grouped && (
         <div>
-          <h4>Days 1–5 — Temperature & Pressure (overlay)</h4>
+          <h4>{grouped.groupATitle} — Temperature & Pressure (overlay)</h4>
           <Line
             ref={chartRefA}
             data={groupAData.data}
@@ -228,16 +241,16 @@ export default function ChartPanel({ openMeteoData, nwsObservations, loading, fe
               scales: {
                 x: sharedOptions.scales.x,
                 y: { type: 'linear', position: 'left', title: { display: true, text: '°F' } },
-                y1: { type: 'linear', position: 'right', title: { display: true, text: 'inHg' }, grid: { drawOnChartArea: false } }
+                y1: { type: 'linear', position: 'right', title: { display: true, text: 'inHg' }, min: 26, max: 34, grid: { drawOnChartArea: false } }
               }
             }}
           />
         </div>
       )}
 
-      {groupBData && (
+      {groupBData && grouped && (
         <div>
-          <h4>Days 6–10 — Temperature & Pressure (overlay)</h4>
+          <h4>{grouped.groupBTitle} — Temperature & Pressure (overlay)</h4>
           <Line
             ref={chartRefB}
             data={groupBData.data}
@@ -247,7 +260,7 @@ export default function ChartPanel({ openMeteoData, nwsObservations, loading, fe
               scales: {
                 x: sharedOptions.scales.x,
                 y: { type: 'linear', position: 'left', title: { display: true, text: '°F' } },
-                y1: { type: 'linear', position: 'right', title: { display: true, text: 'inHg' }, grid: { drawOnChartArea: false } }
+                y1: { type: 'linear', position: 'right', title: { display: true, text: 'inHg' }, min: 26, max: 34, grid: { drawOnChartArea: false } }
               }
             }}
           />
