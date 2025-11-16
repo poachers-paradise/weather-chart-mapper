@@ -175,9 +175,6 @@ export default function ChartPanel({ openMeteoData, nwsObservations, loading, fe
     const temps = group.map(p => p.tempF);
     const pres = group.map(p => p.pressureInHg);
 
-    const convergences = findConvergences(group);
-    const scatterPoints = convergences.map(c => ({ x: c.point.t, y: c.point.tempF, meta: c.point }));
-
     const data = {
       labels,
       datasets: [
@@ -196,23 +193,11 @@ export default function ChartPanel({ openMeteoData, nwsObservations, loading, fe
           backgroundColor: 'rgba(37,99,235,0.06)',
           yAxisID: 'y1',
           tension: 0.2
-        },
-        // scatter for convergence points - red X markers
-        {
-          type: 'scatter',
-          label: 'Convergence',
-          data: scatterPoints,
-          backgroundColor: '#dc2626',
-          borderColor: '#dc2626',
-          pointRadius: 10,
-          pointStyle: 'crossRot',
-          pointBorderWidth: 3,
-          yAxisID: 'y'
         }
       ]
     };
 
-    return { data, convergences };
+    return { data };
   }
 
   const groupAData = grouped ? buildDataForGroup(grouped.groupA) : null;
