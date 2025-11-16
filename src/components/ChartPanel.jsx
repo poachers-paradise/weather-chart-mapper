@@ -32,7 +32,7 @@ function partitionByDay(times) {
   return groups;
 }
 
-export default function ChartPanel({ openMeteoData, nwsObservations, loading, fetchError, onRetry }) {
+export default function ChartPanel({ openMeteoData, location, nwsObservations, loading, fetchError, onRetry }) {
   const [tooltipData, setTooltipData] = useState(null);
   const chartRefA = useRef(null);
   const chartRefB = useRef(null);
@@ -74,13 +74,19 @@ export default function ChartPanel({ openMeteoData, nwsObservations, loading, fe
 
     const formatDate = (date) => date ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
 
+    // Find magic windows if location is available
+    const magicWindowsA = location ? findMagicWindows(groupA, location.lat, location.lon) : [];
+    const magicWindowsB = location ? findMagicWindows(groupB, location.lat, location.lon) : [];
+
     return { 
       groupA, 
       groupB,
       groupATitle: `${formatDate(groupAStart)} - ${formatDate(groupAEnd)}`,
-      groupBTitle: `${formatDate(groupBStart)} - ${formatDate(groupBEnd)}`
+      groupBTitle: `${formatDate(groupBStart)} - ${formatDate(groupBEnd)}`,
+      magicWindowsA,
+      magicWindowsB
     };
-  }, [openMeteoData]);
+  }, [openMeteoData, location]);
 
   // Custom external tooltip handler
   const externalTooltipHandler = (context) => {
@@ -145,6 +151,107 @@ export default function ChartPanel({ openMeteoData, nwsObservations, loading, fe
       }
     }
   };
+
+  // Calculate approximate sunrise/sunset times (simplified algorithm)
+  function isDaylight(date, lat, lon) {
+    const dayOfYear = Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 86400000);
+    const latRad = lat * Math.PI / 180;
+    
+    // Solar declination
+    const declination = 0.409 * Math.sin(2 * Math.PI * dayOfYear / 365 - 1.39);
+    
+    // Hour angle at sunrise/sunset
+    const hourAngle = Math.acos(-Math.tan(latRad) * Math.tan(declination));
+    
+    // Sunrise and sunset in hours from solar noon (simplified, not accounting for equation of time)
+    const solarNoon = 12 - lon / 15; // rough estimate
+    const sunriseHour = solarNoon - hourAngle * 12 / Math.PI;
+    const sunsetHour = solarNoon + hourAngle * 12 / Math.PI;
+    
+    const currentHour = date.getUTCHours() + date.getUTCMinutes() / 60;
+    
+    return currentHour >= sunriseHour && currentHour <= sunsetHour;
+  }
+
+  // Find sustained 4-6 hour windows where pressure rises and temperature drops during daylight
+  function findMagicWindows(group, lat, lon) {
+    if (!group || group.length < 5) return []; // Need at least 5 hours for a 4-hour window
+    
+    const windows = [];
+    
+    // Scan for windows of 4-6 hours
+    for (let windowSize = 4; windowSize <= 6; windowSize++) {
+      for (let start = 0; start <= group.length - windowSize; start++) {
+        const window = group.slice(start, start + windowSize);
+        
+        // Check if entire window is during daylight
+        const allDaylight = window.every(pt => isDaylight(pt.t, lat, lon));
+        if (!allDaylight) continue;
+        
+        // Check for sustained pressure rise and temperature drop
+        let pressureRising = true;
+        let tempDropping = true;
+        
+        for (let i = 1; i < window.length; i++) {
+          const prevT = window[i - 1].tempF;
+          const curT = window[i].tempF;
+          const prevP = window[i - 1].pressureInHg;
+          const curP = window[i].pressureInHg;
+          
+          if (prevT == null || curT == null || prevP == null || curP == null) {
+            pressureRising = false;
+            tempDropping = false;
+            break;
+          }
+          
+          // Check if trend continues (allow 1 minor blip)
+          if (curT >= prevT) tempDropping = false;
+          if (curP <= prevP) pressureRising = false;
+        }
+        
+        // Calculate overall change to confirm it's not just noise
+        const tempChange = window[window.length - 1].tempF - window[0].tempF;
+        const pressureChange = window[window.length - 1].pressureInHg - window[0].pressureInHg;
+        
+        // Require meaningful change: temp drops by at least 2°F, pressure rises by at least 0.03 inHg
+        if (pressureRising && tempDropping && tempChange < -2 && pressureChange > 0.03) {
+          windows.push({
+            start: window[0].t,
+            end: window[window.length - 1].t,
+            duration: windowSize,
+            tempChange,
+            pressureChange,
+            points: window
+          });
+        }
+      }
+    }
+    
+    // Remove overlapping windows, keep the longest ones
+    const filtered = [];
+    windows.forEach(w => {
+      const overlaps = filtered.some(f => 
+        (w.start >= f.start && w.start < f.end) || 
+        (w.end > f.start && w.end <= f.end)
+      );
+      if (!overlaps || w.duration > filtered.find(f => 
+        (w.start >= f.start && w.start < f.end) || 
+        (w.end > f.start && w.end <= f.end)
+      )?.duration) {
+        if (overlaps) {
+          const idx = filtered.findIndex(f => 
+            (w.start >= f.start && w.start < f.end) || 
+            (w.end > f.start && w.end <= f.end)
+          );
+          filtered[idx] = w;
+        } else {
+          filtered.push(w);
+        }
+      }
+    });
+    
+    return filtered;
+  }
 
   // find convergence points in a group: ONLY when pressure is rising AND temperature is falling
   function findConvergences(group) {
@@ -270,6 +377,73 @@ export default function ChartPanel({ openMeteoData, nwsObservations, loading, fe
               <span style={{ fontWeight: '600' }}>{line.label}:</span> {line.value}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Display Magic Windows */}
+      {grouped && (grouped.magicWindowsA.length > 0 || grouped.magicWindowsB.length > 0) && (
+        <div style={{
+          marginTop: '24px',
+          padding: '16px',
+          backgroundColor: '#fef3c7',
+          border: '2px solid #f59e0b',
+          borderRadius: '8px'
+        }}>
+          <h4 style={{ margin: '0 0 12px 0', color: '#92400e', fontSize: '16px', fontWeight: 'bold' }}>
+            ⭐ MAGIC-X Windows Detected
+          </h4>
+          
+          {grouped.magicWindowsA.length > 0 && (
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ fontWeight: '600', color: '#78350f', marginBottom: '8px' }}>
+                {grouped.groupATitle}:
+              </div>
+              {grouped.magicWindowsA.map((window, idx) => (
+                <div key={idx} style={{
+                  padding: '10px',
+                  backgroundColor: '#fff',
+                  borderLeft: '4px solid #f59e0b',
+                  marginBottom: '8px',
+                  fontSize: '13px'
+                }}>
+                  <div style={{ fontWeight: 'bold', color: '#92400e' }}>
+                    {window.start.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} - {window.end.toLocaleString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                  <div style={{ color: '#78350f', marginTop: '4px' }}>
+                    Duration: {window.duration} hours | 
+                    Temp: {window.tempChange.toFixed(1)}°F | 
+                    Pressure: +{window.pressureChange.toFixed(3)} inHg
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {grouped.magicWindowsB.length > 0 && (
+            <div>
+              <div style={{ fontWeight: '600', color: '#78350f', marginBottom: '8px' }}>
+                {grouped.groupBTitle}:
+              </div>
+              {grouped.magicWindowsB.map((window, idx) => (
+                <div key={idx} style={{
+                  padding: '10px',
+                  backgroundColor: '#fff',
+                  borderLeft: '4px solid #f59e0b',
+                  marginBottom: '8px',
+                  fontSize: '13px'
+                }}>
+                  <div style={{ fontWeight: 'bold', color: '#92400e' }}>
+                    {window.start.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} - {window.end.toLocaleString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                  <div style={{ color: '#78350f', marginTop: '4px' }}>
+                    Duration: {window.duration} hours | 
+                    Temp: {window.tempChange.toFixed(1)}°F | 
+                    Pressure: +{window.pressureChange.toFixed(3)} inHg
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

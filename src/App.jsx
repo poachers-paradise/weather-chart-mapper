@@ -70,7 +70,7 @@ export default function App() {
         <aside className="sidebar">
           <h2 style={{ margin: '0 0 16px 0', fontSize: '24px', fontWeight: 'bold', color: '#1f2937' }}>POACHERS PARADISE MAGIC X</h2>
           <SearchBox onSelect={(loc) => setLocation(loc)} />
-          <ChartPanel openMeteoData={openMeteoData} loading={loading} fetchError={fetchError} onRetry={onRetry} />
+          <ChartPanel openMeteoData={openMeteoData} location={location} loading={loading} fetchError={fetchError} onRetry={onRetry} />
         </aside>
         <main className="map-area">
           <MapView 
