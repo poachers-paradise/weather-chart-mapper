@@ -68,9 +68,8 @@ export default function App() {
       <header className="app-header">Weather Chart Mapper — MVP</header>
       <div className="app-body">
         <aside className="sidebar">
-          <h2 style={{ margin: '0 0 16px 0', fontSize: '24px', fontWeight: 'bold', color: '#1f2937' }}>MAGIC-X</h2>
+          <h2 style={{ margin: '0 0 16px 0', fontSize: '24px', fontWeight: 'bold', color: '#1f2937' }}>POACHERS PARADISE MAGIC X</h2>
           <SearchBox onSelect={(loc) => setLocation(loc)} />
-          <GeoJsonUploader />
           <ChartPanel openMeteoData={openMeteoData} loading={loading} fetchError={fetchError} onRetry={onRetry} />
         </aside>
         <main className="map-area">
