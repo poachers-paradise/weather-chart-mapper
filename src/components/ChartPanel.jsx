@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useRef } from "react";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, LineController, ScatterController, Title, Tooltip, Legend, TimeScale } from "chart.js";
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { Line } from "react-chartjs-2";
@@ -33,6 +33,10 @@ function partitionByDay(times) {
 }
 
 export default function ChartPanel({ openMeteoData, nwsObservations, loading, fetchError, onRetry }) {
+  const [tooltipData, setTooltipData] = useState(null);
+  const chartRefA = useRef(null);
+  const chartRefB = useRef(null);
+
   const grouped = useMemo(() => {
     if (!openMeteoData || !openMeteoData.hourly) return null;
     const time = openMeteoData.hourly.time || [];
@@ -64,43 +68,89 @@ export default function ChartPanel({ openMeteoData, nwsObservations, loading, fe
     return { groupA, groupB };
   }, [openMeteoData]);
 
+  // Custom external tooltip handler
+  const externalTooltipHandler = (context) => {
+    const tooltipModel = context.tooltip;
+    if (tooltipModel.opacity === 0) {
+      setTooltipData(null);
+      return;
+    }
+    
+    if (tooltipModel.body) {
+      const dataPoints = tooltipModel.dataPoints || [];
+      const title = tooltipModel.title || [];
+      const lines = [];
+      
+      dataPoints.forEach((point, i) => {
+        const label = point.dataset.label || '';
+        const value = point.formattedValue || '';
+        lines.push({ label, value });
+      });
+      
+      setTooltipData({
+        title: title[0] || '',
+        lines
+      });
+    }
+  };
+
   const sharedOptions = {
     responsive: true,
     interaction: { mode: 'index', intersect: false },
     plugins: {
       legend: { display: true },
+      tooltip: {
+        enabled: false,
+        external: externalTooltipHandler
+      },
       // default datalabels off; we'll enable only for the convergence dataset
       datalabels: { display: false }
     },
     scales: {
-      x: { type: 'time', time: { unit: 'hour' } }
+      x: { 
+        type: 'time', 
+        time: { 
+          unit: 'hour',
+          displayFormats: {
+            hour: 'HH:mm'
+          },
+          tooltipFormat: 'MMM dd, yyyy HH:mm'
+        },
+        ticks: {
+          callback: function(value, index, ticks) {
+            const date = new Date(value);
+            const hour = date.getHours();
+            // Show date label at midnight (00:00) or first tick
+            if (hour === 0 || index === 0) {
+              return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }
+            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+          },
+          maxRotation: 45,
+          minRotation: 45
+        }
+      }
     }
   };
 
-  // find convergence points in a group: temp decreasing and pressure increasing and normalized values close
+  // find convergence points in a group: ONLY when pressure is rising AND temperature is falling
   function findConvergences(group) {
     if (!group || group.length < 3) return [];
     const temps = group.map(p => p.tempF);
     const pres = group.map(p => p.pressureInHg);
-    const minVal = Math.min(...temps.filter(v => v != null), ...pres.filter(v => v != null));
-    const maxVal = Math.max(...temps.filter(v => v != null), ...pres.filter(v => v != null));
-    const range = maxVal - minVal || 1;
-    const tNorm = temps.map(v => (v == null ? null : (v - minVal) / range));
-    const pNorm = pres.map(v => (v == null ? null : (v - minVal) / range));
 
     const conv = [];
     for (let i = 1; i < group.length; i++) {
       const prevT = temps[i - 1], curT = temps[i];
       const prevP = pres[i - 1], curP = pres[i];
       if (prevT == null || curT == null || prevP == null || curP == null) continue;
-      const tDown = curT < prevT;
-      const pUp = curP > prevP;
-      if (tDown && pUp) {
-        const d = Math.abs((tNorm[i] || 0) - (pNorm[i] || 0));
-        // threshold: relatively close when normalized difference < 0.035 (tunable)
-        if (d < 0.035) {
-          conv.push({ index: i, point: group[i] });
-        }
+      
+      // ONLY highlight when pressure is rising AND temperature is falling
+      const temperatureFalling = curT < prevT;
+      const pressureRising = curP > prevP;
+      
+      if (temperatureFalling && pressureRising) {
+        conv.push({ index: i, point: group[i] });
       }
     }
     return conv;
@@ -172,7 +222,7 @@ export default function ChartPanel({ openMeteoData, nwsObservations, loading, fe
 
   return (
     <div className="chart-container">
-      <h3>Forecast</h3>
+      <h3>MAGIC-X</h3>
       {loading && <div>Loading data…</div>}
       {fetchError && !loading && (
         <div style={{ color: '#b91c1c' }}>
@@ -186,6 +236,7 @@ export default function ChartPanel({ openMeteoData, nwsObservations, loading, fe
         <div>
           <h4>Days 1–5 — Temperature & Pressure (overlay)</h4>
           <Line
+            ref={chartRefA}
             data={groupAData.data}
             options={{
               ...sharedOptions,
@@ -204,6 +255,7 @@ export default function ChartPanel({ openMeteoData, nwsObservations, loading, fe
         <div>
           <h4>Days 6–10 — Temperature & Pressure (overlay)</h4>
           <Line
+            ref={chartRefB}
             data={groupBData.data}
             options={{
               ...sharedOptions,
@@ -215,6 +267,27 @@ export default function ChartPanel({ openMeteoData, nwsObservations, loading, fe
               }
             }}
           />
+        </div>
+      )}
+
+      {tooltipData && (
+        <div style={{
+          marginTop: '20px',
+          padding: '12px',
+          backgroundColor: '#f3f4f6',
+          border: '1px solid #d1d5db',
+          borderRadius: '6px',
+          fontFamily: 'monospace',
+          fontSize: '14px'
+        }}>
+          <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#374151' }}>
+            {tooltipData.title}
+          </div>
+          {tooltipData.lines.map((line, idx) => (
+            <div key={idx} style={{ color: '#6b7280', marginBottom: '4px' }}>
+              <span style={{ fontWeight: '600' }}>{line.label}:</span> {line.value}
+            </div>
+          ))}
         </div>
       )}
     </div>
