@@ -103,7 +103,6 @@ export default function ChartPanel({ openMeteoData, nwsObservations, loading, fe
         enabled: false,
         external: externalTooltipHandler
       },
-      // default datalabels off; we'll enable only for the convergence dataset
       datalabels: { display: false }
     },
     scales: {
@@ -184,14 +183,16 @@ export default function ChartPanel({ openMeteoData, nwsObservations, loading, fe
           yAxisID: 'y1',
           tension: 0.2
         },
-        // scatter for convergence points (no labels)
+        // scatter for convergence points - red X markers
         {
           type: 'scatter',
           label: 'Convergence',
           data: scatterPoints,
-          backgroundColor: '#9333ea',
-          borderColor: '#9333ea',
-          pointRadius: 6,
+          backgroundColor: '#dc2626',
+          borderColor: '#dc2626',
+          pointRadius: 10,
+          pointStyle: 'crossRot',
+          pointBorderWidth: 3,
           yAxisID: 'y'
         }
       ]
