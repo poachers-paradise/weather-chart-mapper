@@ -1,10 +1,11 @@
 import React, { useMemo, useState, useRef } from "react";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, LineController, ScatterController, Title, Tooltip, Legend, TimeScale } from "chart.js";
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+import annotationPlugin from 'chartjs-plugin-annotation';
 import { Line } from "react-chartjs-2";
 import 'chartjs-adapter-date-fns';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, LineController, ScatterController, Title, Tooltip, Legend, TimeScale, ChartDataLabels);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, LineController, ScatterController, Title, Tooltip, Legend, TimeScale, ChartDataLabels, annotationPlugin);
 
 function cToF(c) {
   return c == null ? null : (c * 9 / 5) + 32;
@@ -276,7 +277,7 @@ export default function ChartPanel({ openMeteoData, location, nwsObservations, l
     return conv;
   }
 
-  function buildDataForGroup(group) {
+  function buildDataForGroup(group, magicWindows = []) {
     if (!group || group.length === 0) return null;
     const labels = group.map(p => p.t);
     const temps = group.map(p => p.tempF);
@@ -304,11 +305,56 @@ export default function ChartPanel({ openMeteoData, location, nwsObservations, l
       ]
     };
 
-    return { data };
+    // Add vertical line annotations for magic windows
+    const annotations = {};
+    magicWindows.forEach((window, idx) => {
+      annotations[`magicStart${idx}`] = {
+        type: 'line',
+        xMin: window.start,
+        xMax: window.start,
+        borderColor: '#f59e0b',
+        borderWidth: 3,
+        borderDash: [5, 5],
+        label: {
+          display: true,
+          content: '⭐ Start',
+          position: 'start',
+          backgroundColor: '#f59e0b',
+          color: '#fff',
+          font: { size: 10, weight: 'bold' }
+        }
+      };
+      annotations[`magicEnd${idx}`] = {
+        type: 'line',
+        xMin: window.end,
+        xMax: window.end,
+        borderColor: '#f59e0b',
+        borderWidth: 3,
+        borderDash: [5, 5],
+        label: {
+          display: true,
+          content: '⭐ End',
+          position: 'end',
+          backgroundColor: '#f59e0b',
+          color: '#fff',
+          font: { size: 10, weight: 'bold' }
+        }
+      };
+      // Add a box annotation to highlight the region
+      annotations[`magicBox${idx}`] = {
+        type: 'box',
+        xMin: window.start,
+        xMax: window.end,
+        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+        borderWidth: 0
+      };
+    });
+
+    return { data, annotations };
   }
 
-  const groupAData = grouped ? buildDataForGroup(grouped.groupA) : null;
-  const groupBData = grouped ? buildDataForGroup(grouped.groupB) : null;
+  const groupAData = grouped ? buildDataForGroup(grouped.groupA, grouped.magicWindowsA) : null;
+  const groupBData = grouped ? buildDataForGroup(grouped.groupB, grouped.magicWindowsB) : null;
 
   return (
     <div className="chart-container">
@@ -329,7 +375,13 @@ export default function ChartPanel({ openMeteoData, location, nwsObservations, l
             data={groupAData.data}
             options={{
               ...sharedOptions,
-              plugins: { ...sharedOptions.plugins, legend: { display: true } },
+              plugins: { 
+                ...sharedOptions.plugins, 
+                legend: { display: true },
+                annotation: {
+                  annotations: groupAData.annotations
+                }
+              },
               scales: {
                 x: sharedOptions.scales.x,
                 y: { type: 'linear', position: 'left', title: { display: true, text: '°F' } },
@@ -348,7 +400,13 @@ export default function ChartPanel({ openMeteoData, location, nwsObservations, l
             data={groupBData.data}
             options={{
               ...sharedOptions,
-              plugins: { ...sharedOptions.plugins, legend: { display: true } },
+              plugins: { 
+                ...sharedOptions.plugins, 
+                legend: { display: true },
+                annotation: {
+                  annotations: groupBData.annotations
+                }
+              },
               scales: {
                 x: sharedOptions.scales.x,
                 y: { type: 'linear', position: 'left', title: { display: true, text: '°F' } },
