@@ -12,3 +12,26 @@ body, html, #root { height: 100%; margin: 0; }
 .search-results li{ padding:8px; border-bottom:1px solid #e6eef6; cursor:pointer }
 .uploader{ margin-top:12px }
 .chart-container{ margin-top:12px }
+
+/* Mobile responsive layout */
+@media (max-width: 768px) {
+  .app-body {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  
+  .sidebar {
+    width: 100%;
+    height: auto;
+    min-height: auto;
+    order: 2;
+  }
+  
+  .map-area {
+    width: 100%;
+    height: 100vw; /* 1:1 square aspect ratio */
+    max-height: 400px;
+    order: 1;
+    flex: none;
+  }
+}
