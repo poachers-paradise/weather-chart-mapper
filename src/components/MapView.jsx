@@ -8,6 +8,13 @@ export default function MapView({ center = { lat: 51.5074, lon: -0.1278 }, onCli
 
   useEffect(() => {
     if (!containerRef.current) return;
+    
+    // North America bounds: [west, south, east, north]
+    const northAmericaBounds = [
+      [-168.0, 7.0],   // Southwest: Alaska/Central America
+      [-52.0, 83.0]    // Northeast: Greenland/Arctic
+    ];
+    
     mapRef.current = new maplibregl.Map({
       container: containerRef.current,
       style: {
@@ -41,7 +48,8 @@ export default function MapView({ center = { lat: 51.5074, lon: -0.1278 }, onCli
         ]
       },
       center: [center.lon, center.lat],
-      zoom: 6
+      zoom: 6,
+      maxBounds: northAmericaBounds
     });
 
     const marker = new maplibregl.Marker().setLngLat([center.lon, center.lat]).addTo(mapRef.current);
