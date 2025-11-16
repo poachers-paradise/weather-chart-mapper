@@ -214,8 +214,8 @@ export default function ChartPanel({ openMeteoData, location, nwsObservations, l
         const tempChange = window[window.length - 1].tempF - window[0].tempF;
         const pressureChange = window[window.length - 1].pressureInHg - window[0].pressureInHg;
         
-        // Require meaningful change: temp drops by at least 2°F, pressure rises by at least 0.03 inHg
-        if (pressureRising && tempDropping && tempChange < -2 && pressureChange > 0.03) {
+        // Require meaningful change: temp drops by at least 1°F, pressure rises by at least 0.02 inHg
+        if (pressureRising && tempDropping && tempChange < -1 && pressureChange > 0.02) {
           windows.push({
             start: window[0].t,
             end: window[window.length - 1].t,
@@ -227,6 +227,8 @@ export default function ChartPanel({ openMeteoData, location, nwsObservations, l
         }
       }
     }
+    
+    console.log('Magic Windows found:', windows.length, windows);
     
     // Remove overlapping windows, keep the longest ones
     const filtered = [];
@@ -308,10 +310,23 @@ export default function ChartPanel({ openMeteoData, location, nwsObservations, l
     // Add vertical line annotations for magic windows
     const annotations = {};
     magicWindows.forEach((window, idx) => {
+      const startTime = window.start.getTime();
+      const endTime = window.end.getTime();
+      
+      // Box annotation to highlight the region
+      annotations[`magicBox${idx}`] = {
+        type: 'box',
+        xMin: startTime,
+        xMax: endTime,
+        backgroundColor: 'rgba(245, 158, 11, 0.15)',
+        borderWidth: 0
+      };
+      
+      // Start line
       annotations[`magicStart${idx}`] = {
         type: 'line',
-        xMin: window.start,
-        xMax: window.start,
+        xMin: startTime,
+        xMax: startTime,
         borderColor: '#f59e0b',
         borderWidth: 3,
         borderDash: [5, 5],
@@ -324,10 +339,12 @@ export default function ChartPanel({ openMeteoData, location, nwsObservations, l
           font: { size: 10, weight: 'bold' }
         }
       };
+      
+      // End line
       annotations[`magicEnd${idx}`] = {
         type: 'line',
-        xMin: window.end,
-        xMax: window.end,
+        xMin: endTime,
+        xMax: endTime,
         borderColor: '#f59e0b',
         borderWidth: 3,
         borderDash: [5, 5],
@@ -340,15 +357,9 @@ export default function ChartPanel({ openMeteoData, location, nwsObservations, l
           font: { size: 10, weight: 'bold' }
         }
       };
-      // Add a box annotation to highlight the region
-      annotations[`magicBox${idx}`] = {
-        type: 'box',
-        xMin: window.start,
-        xMax: window.end,
-        backgroundColor: 'rgba(245, 158, 11, 0.1)',
-        borderWidth: 0
-      };
     });
+    
+    console.log('Annotations created:', Object.keys(annotations).length, annotations);
 
     return { data, annotations };
   }
