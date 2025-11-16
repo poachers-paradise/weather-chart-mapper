@@ -10,7 +10,36 @@ export default function MapView({ center = { lat: 51.5074, lon: -0.1278 }, onCli
     if (!containerRef.current) return;
     mapRef.current = new maplibregl.Map({
       container: containerRef.current,
-      style: "https://demotiles.maplibre.org/style.json",
+      style: {
+        version: 8,
+        sources: {
+          'usgs-topo': {
+            type: 'raster',
+            tiles: [
+              'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}'
+            ],
+            tileSize: 256,
+            attribution: 'USGS The National Map'
+          },
+          'usgs-imagery-topo': {
+            type: 'raster',
+            tiles: [
+              'https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryTopo/MapServer/tile/{z}/{y}/{x}'
+            ],
+            tileSize: 256,
+            attribution: 'USGS The National Map'
+          }
+        },
+        layers: [
+          {
+            id: 'usgs-topo-layer',
+            type: 'raster',
+            source: 'usgs-topo',
+            minzoom: 0,
+            maxzoom: 22
+          }
+        ]
+      },
       center: [center.lon, center.lat],
       zoom: 6
     });
