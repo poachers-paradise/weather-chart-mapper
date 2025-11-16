@@ -240,7 +240,7 @@ export default function ChartPanel({ openMeteoData, nwsObservations, loading, fe
               scales: {
                 x: sharedOptions.scales.x,
                 y: { type: 'linear', position: 'left', title: { display: true, text: '°F' } },
-                y1: { type: 'linear', position: 'right', title: { display: true, text: 'inHg' }, min: 28.75, max: 31, grid: { drawOnChartArea: false } }
+                y1: { type: 'linear', position: 'right', title: { display: true, text: 'inHg' }, min: 29, max: 30.5, grid: { drawOnChartArea: false } }
               }
             }}
           />
@@ -259,7 +259,7 @@ export default function ChartPanel({ openMeteoData, nwsObservations, loading, fe
               scales: {
                 x: sharedOptions.scales.x,
                 y: { type: 'linear', position: 'left', title: { display: true, text: '°F' } },
-                y1: { type: 'linear', position: 'right', title: { display: true, text: 'inHg' }, min: 28.75, max: 31, grid: { drawOnChartArea: false } }
+                y1: { type: 'linear', position: 'right', title: { display: true, text: 'inHg' }, min: 29, max: 30.5, grid: { drawOnChartArea: false } }
               }
             }}
           />
