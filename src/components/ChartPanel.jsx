@@ -184,32 +184,15 @@ export default function ChartPanel({ openMeteoData, nwsObservations, loading, fe
           yAxisID: 'y1',
           tension: 0.2
         },
-        // scatter for convergence labels
+        // scatter for convergence points (no labels)
         {
           type: 'scatter',
           label: 'Convergence',
           data: scatterPoints,
           backgroundColor: '#9333ea',
           borderColor: '#9333ea',
-          pointRadius: 4,
-          yAxisID: 'y',
-          // enable datalabels for this dataset
-          datalabels: {
-            display: true,
-            align: 'top',
-            anchor: 'end',
-            formatter: function(value, ctx) {
-              const v = value && value.y != null ? value.y : null;
-              const presVal = value && value.meta ? value.meta.pressureInHg : null;
-              if (v == null || presVal == null) return '';
-              return `${Math.round(v)}°F / ${presVal.toFixed(2)} inHg`;
-            },
-            backgroundColor: 'rgba(0,0,0,0.6)',
-            color: '#fff',
-            padding: 4,
-            borderRadius: 4,
-            font: { size: 10 }
-          }
+          pointRadius: 6,
+          yAxisID: 'y'
         }
       ]
     };
