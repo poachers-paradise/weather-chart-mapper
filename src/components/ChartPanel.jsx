@@ -219,7 +219,6 @@ export default function ChartPanel({ openMeteoData, nwsObservations, loading, fe
 
   return (
     <div className="chart-container">
-      <h3>MAGIC-X</h3>
       {loading && <div>Loading data…</div>}
       {fetchError && !loading && (
         <div style={{ color: '#b91c1c' }}>
