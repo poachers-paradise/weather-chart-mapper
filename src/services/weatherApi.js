@@ -38,7 +38,7 @@ export async function fetchOpenMeteoArchive(lat, lon, start_date, end_date, opts
         longitude: lon,
         start_date,
         end_date: adjEnd,
-        hourly: "temperature_2m,surface_pressure",
+        hourly: useForecast ? "temperature_2m,pressure_msl" : "temperature_2m,surface_pressure",
         timezone: "UTC"
       };
 

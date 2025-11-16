@@ -41,7 +41,8 @@ export default function ChartPanel({ openMeteoData, nwsObservations, loading, fe
     if (!openMeteoData || !openMeteoData.hourly) return null;
     const time = openMeteoData.hourly.time || [];
     const tempC = openMeteoData.hourly.temperature_2m || [];
-    const pressureHpa = openMeteoData.hourly.surface_pressure || [];
+    // Open-Meteo forecast uses pressure_msl, archive uses surface_pressure
+    const pressureHpa = openMeteoData.hourly.pressure_msl || openMeteoData.hourly.surface_pressure || [];
 
     const times = time.map(t => new Date(t));
 
