@@ -56,6 +56,7 @@ export default function MapView({ center = { lat: 51.5074, lon: -0.1278 }, onCli
 
     mapRef.current.on("click", (e) => {
       const { lat, lng } = e.lngLat;
+      marker.setLngLat([lng, lat]); // Move marker to clicked location
       onClick && onClick({ lat, lon: lng });
     });
 

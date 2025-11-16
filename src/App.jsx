@@ -74,7 +74,10 @@ export default function App() {
           <ChartPanel openMeteoData={openMeteoData} loading={loading} fetchError={fetchError} onRetry={onRetry} />
         </aside>
         <main className="map-area">
-          <MapView center={{ lat: location.lat, lon: location.lon }} />
+          <MapView 
+            center={{ lat: location.lat, lon: location.lon }} 
+            onClick={(coords) => setLocation({ lat: coords.lat, lon: coords.lon, name: `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}` })}
+          />
         </main>
       </div>
     </div>
