@@ -197,7 +197,9 @@ export function calculateThermalTimeSeries(forecastData, options = {}) {
       time: times[i],
       ...thermal,
       insolation,
-      hour
+      hour,
+      wind_speed: ws,
+      wind_dir: wd
     });
   }
 

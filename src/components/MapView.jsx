@@ -156,6 +156,61 @@ export default function MapView({ center = { lat: 51.5074, lon: -0.1278 }, onCli
         ctx.strokeText(wstarText, centerPoint.x - 40, centerPoint.y - radius + 5);
         ctx.fillText(wstarText, centerPoint.x - 40, centerPoint.y - radius + 5);
         
+        // Draw wind direction arrow
+        if (thermal.wind_speed && thermal.wind_dir !== undefined) {
+          const windSpeed = thermal.wind_speed;
+          const windDir = thermal.wind_dir;
+          
+          // Convert meteorological direction (where wind comes FROM) to radians
+          const windAngle = (windDir - 90) * Math.PI / 180; // -90 to rotate so 0° points up (north)
+          
+          // Draw wind arrow to the side of thermal circle
+          const arrowX = centerPoint.x + radius + 60;
+          const arrowY = centerPoint.y;
+          const arrowLength = 30 + Math.min(windSpeed * 2, 40); // Scale with wind speed
+          
+          // Draw arrow shaft
+          ctx.strokeStyle = 'rgba(0, 100, 200, 0.8)';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          const endX = arrowX + Math.cos(windAngle) * arrowLength;
+          const endY = arrowY + Math.sin(windAngle) * arrowLength;
+          ctx.moveTo(arrowX, arrowY);
+          ctx.lineTo(endX, endY);
+          ctx.stroke();
+          
+          // Draw arrowhead
+          const headSize = 10;
+          ctx.beginPath();
+          ctx.moveTo(endX, endY);
+          ctx.lineTo(
+            endX - headSize * Math.cos(windAngle - Math.PI / 6),
+            endY - headSize * Math.sin(windAngle - Math.PI / 6)
+          );
+          ctx.moveTo(endX, endY);
+          ctx.lineTo(
+            endX - headSize * Math.cos(windAngle + Math.PI / 6),
+            endY - headSize * Math.sin(windAngle + Math.PI / 6)
+          );
+          ctx.stroke();
+          
+          // Wind speed label
+          ctx.font = 'bold 12px Arial';
+          ctx.fillStyle = 'white';
+          ctx.strokeStyle = 'black';
+          ctx.lineWidth = 2;
+          const windText = `${windSpeed.toFixed(1)} m/s`;
+          const windTextX = arrowX - 30;
+          const windTextY = arrowY + arrowLength + 20;
+          ctx.strokeText(windText, windTextX, windTextY);
+          ctx.fillText(windText, windTextX, windTextY);
+          
+          // Wind direction label
+          const dirText = `${windDir.toFixed(0)}°`;
+          ctx.strokeText(dirText, windTextX, windTextY + 15);
+          ctx.fillText(dirText, windTextX, windTextY + 15);
+        }
+        
         return true;
       }
     };
