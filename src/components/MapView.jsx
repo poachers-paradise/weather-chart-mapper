@@ -118,7 +118,7 @@ export default function MapView({ center = { lat: 51.5074, lon: -0.1278 }, onCli
         ctx.stroke();
         
         // Draw arrow pattern showing updraft
-        if (score > 0.2) { // Only show arrows for decent thermals
+        if (score > 0.1) { // Only show arrows for decent thermals
           const arrowCount = Math.min(8, Math.floor(score * 12));
           for (let i = 0; i < arrowCount; i++) {
             const angle = (i / arrowCount) * 2 * Math.PI;
@@ -186,15 +186,15 @@ export default function MapView({ center = { lat: 51.5074, lon: -0.1278 }, onCli
       {thermalData && thermalData.length > 0 && (
         <div style={{
           position: "absolute",
-          bottom: "20px",
-          left: "50%",
-          transform: "translateX(-50%)",
+          top: "80px",
+          left: "10px",
+          right: "10px",
           backgroundColor: "rgba(255, 255, 255, 0.95)",
           padding: "12px 20px",
           borderRadius: "8px",
           boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
           zIndex: 1000,
-          minWidth: "300px"
+          maxWidth: "400px"
         }}>
           <div style={{ marginBottom: "8px", fontWeight: "bold", fontSize: "12px", color: "#333" }}>
             {thermalData[selectedHourIndex]?.time || 'Loading...'}
