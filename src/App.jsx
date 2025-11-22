@@ -8,7 +8,7 @@ import { calculateThermalTimeSeries } from "./services/thermalCalculator";
 import { getTerrainDataCached } from "./services/terrainApi";
 
 export default function App() {
-  const [location, setLocation] = useState({ lat: 51.5074, lon: -0.1278, name: "London" });
+  const [location, setLocation] = useState({ lat: 45.1323, lon: -70.4745, name: "Eustis, Maine" });
   const [openMeteoData, setOpenMeteoData] = useState(null);
   const [thermalData, setThermalData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -28,9 +28,18 @@ export default function App() {
         const data = await fetchOpenMeteoArchive(location.lat, location.lon, fmt(start), fmt(end), { attempts: 2, timeoutMs: 8000 });
         setOpenMeteoData(data);
         
-        // Fetch terrain data for this location
-        const terrain = await getTerrainDataCached(location.lat, location.lon, 100);
-        console.log('Terrain data:', terrain);
+        // Fetch terrain data for this location (with timeout)
+        let terrain = null;
+        try {
+          const terrainPromise = getTerrainDataCached(location.lat, location.lon, 100);
+          terrain = await Promise.race([
+            terrainPromise,
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Terrain timeout')), 5000))
+          ]);
+          console.log('Terrain data:', terrain);
+        } catch (e) {
+          console.warn('Terrain fetch failed, using flat terrain:', e.message);
+        }
         
         // Calculate thermal data with actual terrain
         const thermals = calculateThermalTimeSeries(data, {
@@ -69,9 +78,18 @@ export default function App() {
         const data = await fetchOpenMeteoArchive(location.lat, location.lon, fmt(start), fmt(end), { attempts: 2, timeoutMs: 8000 });
         setOpenMeteoData(data);
         
-        // Fetch terrain data for this location
-        const terrain = await getTerrainDataCached(location.lat, location.lon, 100);
-        console.log('Terrain data:', terrain);
+        // Fetch terrain data for this location (with timeout)
+        let terrain = null;
+        try {
+          const terrainPromise = getTerrainDataCached(location.lat, location.lon, 100);
+          terrain = await Promise.race([
+            terrainPromise,
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Terrain timeout')), 5000))
+          ]);
+          console.log('Terrain data:', terrain);
+        } catch (e) {
+          console.warn('Terrain fetch failed, using flat terrain:', e.message);
+        }
         
         // Calculate thermal data with actual terrain
         const thermals = calculateThermalTimeSeries(data, {

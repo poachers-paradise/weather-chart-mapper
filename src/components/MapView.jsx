@@ -10,10 +10,10 @@ export default function MapView({ center = { lat: 51.5074, lon: -0.1278 }, onCli
   useEffect(() => {
     if (!containerRef.current) return;
     
-    // North America bounds: [west, south, east, north]
-    const northAmericaBounds = [
-      [-168.0, 7.0],   // Southwest: Alaska/Central America
-      [-52.0, 83.0]    // Northeast: Greenland/Arctic
+    // US bounds + 50 miles north of border: [west, south, east, north]
+    const usBounds = [
+      [-168.0, 24.0],   // Southwest: Hawaii/Florida Keys
+      [-52.0, 49.8]     // Northeast: ~50 miles north of US-Canada border
     ];
     
     mapRef.current = new maplibregl.Map({
@@ -50,7 +50,7 @@ export default function MapView({ center = { lat: 51.5074, lon: -0.1278 }, onCli
       },
       center: [center.lon, center.lat],
       zoom: 6,
-      maxBounds: northAmericaBounds
+      maxBounds: usBounds
     });
 
     const marker = new maplibregl.Marker().setLngLat([center.lon, center.lat]).addTo(mapRef.current);
