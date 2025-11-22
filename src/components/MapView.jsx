@@ -95,6 +95,9 @@ export default function MapView({ center = { lat: 51.5074, lon: -0.1278 }, onCli
         
         const thermal = thermalData[selectedHourIndex];
         if (!thermal) return;
+        
+        // Debug: log thermal data to check wind values
+        console.log('Thermal object:', thermal);
 
         // Draw thermal strength indicator at center
         const centerPoint = map.project([center.lon, center.lat]);
@@ -157,16 +160,17 @@ export default function MapView({ center = { lat: 51.5074, lon: -0.1278 }, onCli
         ctx.fillText(wstarText, centerPoint.x - 40, centerPoint.y - radius + 5);
         
         // Draw wind direction arrow
-        if (thermal.wind_speed && thermal.wind_dir !== undefined) {
+        if (thermal.wind_speed !== undefined && thermal.wind_dir !== undefined) {
+          console.log('Drawing wind arrow:', thermal.wind_speed, 'm/s at', thermal.wind_dir, '°');
           const windSpeed = thermal.wind_speed;
           const windDir = thermal.wind_dir;
           
           // Convert meteorological direction (where wind comes FROM) to radians
           const windAngle = (windDir - 90) * Math.PI / 180; // -90 to rotate so 0° points up (north)
           
-          // Draw wind arrow to the side of thermal circle
-          const arrowX = centerPoint.x + radius + 60;
-          const arrowY = centerPoint.y;
+          // Draw wind arrow below the thermal circle
+          const arrowX = centerPoint.x;
+          const arrowY = centerPoint.y + radius + 80;
           const arrowLength = 30 + Math.min(windSpeed * 2, 40); // Scale with wind speed
           
           // Draw arrow shaft
