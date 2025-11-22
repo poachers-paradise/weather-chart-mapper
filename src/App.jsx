@@ -5,6 +5,7 @@ import ChartPanel from "./components/ChartPanel";
 import GeoJsonUploader from "./components/GeoJsonUploader";
 import { fetchOpenMeteoArchive } from "./services/weatherApi";
 import { calculateThermalTimeSeries } from "./services/thermalCalculator";
+import { getTerrainDataCached } from "./services/terrainApi";
 
 export default function App() {
   const [location, setLocation] = useState({ lat: 51.5074, lon: -0.1278, name: "London" });
@@ -27,11 +28,15 @@ export default function App() {
         const data = await fetchOpenMeteoArchive(location.lat, location.lon, fmt(start), fmt(end), { attempts: 2, timeoutMs: 8000 });
         setOpenMeteoData(data);
         
-        // Calculate thermal data
+        // Fetch terrain data for this location
+        const terrain = await getTerrainDataCached(location.lat, location.lon, 100);
+        console.log('Terrain data:', terrain);
+        
+        // Calculate thermal data with actual terrain
         const thermals = calculateThermalTimeSeries(data, {
-          slope_deg: 0,
-          aspect_deg: 0,
-          zi: 1000
+          slope_deg: terrain?.slope_deg || 0,
+          aspect_deg: terrain?.aspect_deg || 0,
+          zi: 1000 + (terrain?.elevation || 0)
         });
         setThermalData(thermals);
       } catch (e) {
@@ -64,11 +69,15 @@ export default function App() {
         const data = await fetchOpenMeteoArchive(location.lat, location.lon, fmt(start), fmt(end), { attempts: 2, timeoutMs: 8000 });
         setOpenMeteoData(data);
         
-        // Calculate thermal data
+        // Fetch terrain data for this location
+        const terrain = await getTerrainDataCached(location.lat, location.lon, 100);
+        console.log('Terrain data:', terrain);
+        
+        // Calculate thermal data with actual terrain
         const thermals = calculateThermalTimeSeries(data, {
-          slope_deg: 0,
-          aspect_deg: 0,
-          zi: 1000
+          slope_deg: terrain?.slope_deg || 0,
+          aspect_deg: terrain?.aspect_deg || 0,
+          zi: 1000 + (terrain?.elevation || 0)
         });
         setThermalData(thermals);
       } catch (e) {
