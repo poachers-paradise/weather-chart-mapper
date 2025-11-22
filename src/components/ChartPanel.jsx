@@ -75,6 +75,109 @@ export default function ChartPanel({ openMeteoData, location, nwsObservations, l
 
     const formatDate = (date) => date ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
 
+    // Calculate approximate sunrise/sunset times (simplified algorithm)
+    function isDaylight(date, lat, lon) {
+      const dayOfYear = Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 86400000);
+      const latRad = lat * Math.PI / 180;
+      
+      // Solar declination
+      const declination = 0.409 * Math.sin(2 * Math.PI * dayOfYear / 365 - 1.39);
+      
+      // Hour angle at sunrise/sunset
+      const hourAngle = Math.acos(-Math.tan(latRad) * Math.tan(declination));
+      
+      // Sunrise and sunset in hours from solar noon (simplified, not accounting for equation of time)
+      const solarNoon = 12 - lon / 15; // rough estimate
+      const sunriseHour = solarNoon - hourAngle * 12 / Math.PI;
+      const sunsetHour = solarNoon + hourAngle * 12 / Math.PI;
+      
+      const currentHour = date.getUTCHours() + date.getUTCMinutes() / 60;
+      
+      return currentHour >= sunriseHour && currentHour <= sunsetHour;
+    }
+
+    // Find sustained 4-6 hour windows where pressure rises and temperature drops during daylight
+    function findMagicWindows(group, lat, lon) {
+      if (!group || group.length < 5) return []; // Need at least 5 hours for a 4-hour window
+      
+      const windows = [];
+      
+      // Scan for windows of 4-6 hours
+      for (let windowSize = 4; windowSize <= 6; windowSize++) {
+        for (let start = 0; start <= group.length - windowSize; start++) {
+          const window = group.slice(start, start + windowSize);
+          
+          // Check if entire window is during daylight
+          const allDaylight = window.every(pt => isDaylight(pt.t, lat, lon));
+          if (!allDaylight) continue;
+          
+          // Check for sustained pressure rise and temperature drop
+          let pressureRising = true;
+          let tempDropping = true;
+          
+          for (let i = 1; i < window.length; i++) {
+            const prevT = window[i - 1].tempF;
+            const curT = window[i].tempF;
+            const prevP = window[i - 1].pressureInHg;
+            const curP = window[i].pressureInHg;
+            
+            if (prevT == null || curT == null || prevP == null || curP == null) {
+              pressureRising = false;
+              tempDropping = false;
+              break;
+            }
+            
+            // Check if trend continues (allow 1 minor blip)
+            if (curT >= prevT) tempDropping = false;
+            if (curP <= prevP) pressureRising = false;
+          }
+          
+          // Calculate overall change to confirm it's not just noise
+          const tempChange = window[window.length - 1].tempF - window[0].tempF;
+          const pressureChange = window[window.length - 1].pressureInHg - window[0].pressureInHg;
+          
+          // Require meaningful change: temp drops by at least 1°F, pressure rises by at least 0.02 inHg
+          if (pressureRising && tempDropping && tempChange < -1 && pressureChange > 0.02) {
+            windows.push({
+              start: window[0].t,
+              end: window[window.length - 1].t,
+              duration: windowSize,
+              tempChange,
+              pressureChange,
+              points: window
+            });
+          }
+        }
+      }
+      
+      console.log('Magic Windows found:', windows.length, windows);
+      
+      // Remove overlapping windows, keep the longest ones
+      const filtered = [];
+      windows.forEach(w => {
+        const overlaps = filtered.some(f => 
+          (w.start >= f.start && w.start < f.end) || 
+          (w.end > f.start && w.end <= f.end)
+        );
+        if (!overlaps || w.duration > filtered.find(f => 
+          (w.start >= f.start && w.start < f.end) || 
+          (w.end > f.start && w.end <= f.end)
+        )?.duration) {
+          if (overlaps) {
+            const idx = filtered.findIndex(f => 
+              (w.start >= f.start && w.start < f.end) || 
+              (w.end > f.start && w.end <= f.end)
+            );
+            filtered[idx] = w;
+          } else {
+            filtered.push(w);
+          }
+        }
+      });
+      
+      return filtered;
+    }
+
     // Find magic windows if location is available
     const magicWindowsA = location ? findMagicWindows(groupA, location.lat, location.lon) : [];
     const magicWindowsB = location ? findMagicWindows(groupB, location.lat, location.lon) : [];
@@ -152,109 +255,6 @@ export default function ChartPanel({ openMeteoData, location, nwsObservations, l
       }
     }
   };
-
-  // Calculate approximate sunrise/sunset times (simplified algorithm)
-  function isDaylight(date, lat, lon) {
-    const dayOfYear = Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 86400000);
-    const latRad = lat * Math.PI / 180;
-    
-    // Solar declination
-    const declination = 0.409 * Math.sin(2 * Math.PI * dayOfYear / 365 - 1.39);
-    
-    // Hour angle at sunrise/sunset
-    const hourAngle = Math.acos(-Math.tan(latRad) * Math.tan(declination));
-    
-    // Sunrise and sunset in hours from solar noon (simplified, not accounting for equation of time)
-    const solarNoon = 12 - lon / 15; // rough estimate
-    const sunriseHour = solarNoon - hourAngle * 12 / Math.PI;
-    const sunsetHour = solarNoon + hourAngle * 12 / Math.PI;
-    
-    const currentHour = date.getUTCHours() + date.getUTCMinutes() / 60;
-    
-    return currentHour >= sunriseHour && currentHour <= sunsetHour;
-  }
-
-  // Find sustained 4-6 hour windows where pressure rises and temperature drops during daylight
-  function findMagicWindows(group, lat, lon) {
-    if (!group || group.length < 5) return []; // Need at least 5 hours for a 4-hour window
-    
-    const windows = [];
-    
-    // Scan for windows of 4-6 hours
-    for (let windowSize = 4; windowSize <= 6; windowSize++) {
-      for (let start = 0; start <= group.length - windowSize; start++) {
-        const window = group.slice(start, start + windowSize);
-        
-        // Check if entire window is during daylight
-        const allDaylight = window.every(pt => isDaylight(pt.t, lat, lon));
-        if (!allDaylight) continue;
-        
-        // Check for sustained pressure rise and temperature drop
-        let pressureRising = true;
-        let tempDropping = true;
-        
-        for (let i = 1; i < window.length; i++) {
-          const prevT = window[i - 1].tempF;
-          const curT = window[i].tempF;
-          const prevP = window[i - 1].pressureInHg;
-          const curP = window[i].pressureInHg;
-          
-          if (prevT == null || curT == null || prevP == null || curP == null) {
-            pressureRising = false;
-            tempDropping = false;
-            break;
-          }
-          
-          // Check if trend continues (allow 1 minor blip)
-          if (curT >= prevT) tempDropping = false;
-          if (curP <= prevP) pressureRising = false;
-        }
-        
-        // Calculate overall change to confirm it's not just noise
-        const tempChange = window[window.length - 1].tempF - window[0].tempF;
-        const pressureChange = window[window.length - 1].pressureInHg - window[0].pressureInHg;
-        
-        // Require meaningful change: temp drops by at least 1°F, pressure rises by at least 0.02 inHg
-        if (pressureRising && tempDropping && tempChange < -1 && pressureChange > 0.02) {
-          windows.push({
-            start: window[0].t,
-            end: window[window.length - 1].t,
-            duration: windowSize,
-            tempChange,
-            pressureChange,
-            points: window
-          });
-        }
-      }
-    }
-    
-    console.log('Magic Windows found:', windows.length, windows);
-    
-    // Remove overlapping windows, keep the longest ones
-    const filtered = [];
-    windows.forEach(w => {
-      const overlaps = filtered.some(f => 
-        (w.start >= f.start && w.start < f.end) || 
-        (w.end > f.start && w.end <= f.end)
-      );
-      if (!overlaps || w.duration > filtered.find(f => 
-        (w.start >= f.start && w.start < f.end) || 
-        (w.end > f.start && w.end <= f.end)
-      )?.duration) {
-        if (overlaps) {
-          const idx = filtered.findIndex(f => 
-            (w.start >= f.start && w.start < f.end) || 
-            (w.end > f.start && w.end <= f.end)
-          );
-          filtered[idx] = w;
-        } else {
-          filtered.push(w);
-        }
-      }
-    });
-    
-    return filtered;
-  }
 
   // find convergence points in a group: ONLY when pressure is rising AND temperature is falling
   function findConvergences(group) {
