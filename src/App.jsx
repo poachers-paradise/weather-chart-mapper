@@ -4,10 +4,12 @@ import SearchBox from "./components/SearchBox";
 import ChartPanel from "./components/ChartPanel";
 import GeoJsonUploader from "./components/GeoJsonUploader";
 import { fetchOpenMeteoArchive } from "./services/weatherApi";
+import { calculateThermalTimeSeries } from "./services/thermalCalculator";
 
 export default function App() {
   const [location, setLocation] = useState({ lat: 51.5074, lon: -0.1278, name: "London" });
   const [openMeteoData, setOpenMeteoData] = useState(null);
+  const [thermalData, setThermalData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState(null);
 
@@ -24,6 +26,14 @@ export default function App() {
         // use retries/timeouts via the service
         const data = await fetchOpenMeteoArchive(location.lat, location.lon, fmt(start), fmt(end), { attempts: 2, timeoutMs: 8000 });
         setOpenMeteoData(data);
+        
+        // Calculate thermal data
+        const thermals = calculateThermalTimeSeries(data, {
+          slope_deg: 0,
+          aspect_deg: 0,
+          zi: 1000
+        });
+        setThermalData(thermals);
       } catch (e) {
         console.error('Fetch Open-Meteo failed', e && e.message ? e.message : e);
         setOpenMeteDataToNull();
@@ -53,6 +63,14 @@ export default function App() {
         const fmt = (d) => d.toISOString().slice(0, 10);
         const data = await fetchOpenMeteoArchive(location.lat, location.lon, fmt(start), fmt(end), { attempts: 2, timeoutMs: 8000 });
         setOpenMeteoData(data);
+        
+        // Calculate thermal data
+        const thermals = calculateThermalTimeSeries(data, {
+          slope_deg: 0,
+          aspect_deg: 0,
+          zi: 1000
+        });
+        setThermalData(thermals);
       } catch (e) {
         console.error('Retry fetch failed', e && e.message ? e.message : e);
         setOpenMeteData(null);
@@ -74,7 +92,8 @@ export default function App() {
         </aside>
         <main className="map-area">
           <MapView 
-            center={{ lat: location.lat, lon: location.lon }} 
+            center={{ lat: location.lat, lon: location.lon }}
+            thermalData={thermalData}
             onClick={(coords) => setLocation({ lat: coords.lat, lon: coords.lon, name: `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}` })}
           />
         </main>
